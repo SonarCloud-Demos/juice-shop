@@ -18,6 +18,12 @@ builder.Services.AddSingleton(_ => sqlite);
 builder.Services.AddSingleton<PartnerFeedIngestionService>();
 builder.Services.AddSingleton<SupportOrderLookupService>();
 builder.Services.AddHttpClient<MerchandisingFeedPreviewService>();
+builder.Services.AddSingleton<InventoryTextSearchService>();
+builder.Services.AddSingleton<LegacyPartnerAuthService>();
+builder.Services.AddSingleton<PartnerHttpProbeService>();
+builder.Services.AddSingleton<ReportExportCryptoService>();
+builder.Services.AddSingleton<AutomationBridgeService>();
+builder.Services.AddSingleton<ShipmentPriorityService>();
 
 var app = builder.Build();
 
@@ -42,6 +48,30 @@ app.MapGet("/api/warehouse/orders/lookup", (string whereFragment, SupportOrderLo
 // Merchandising: verify an upstream catalog URL responds before we schedule the sync window.
 app.MapGet("/api/merch/feed-peek", async (string sourceUrl, MerchandisingFeedPreviewService merch) =>
     await merch.VerifyVendorFeedResponse(sourceUrl));
+
+// Ops: ad hoc search against the latest snapshot lines embedded in the microservice.
+var snapshotLines = new[] { "SKU-1 Orange", "SKU-2 Apple Juice 1L", "Pallet-88 Raspberry" };
+app.MapGet("/api/warehouse/inventory/snapshot-search", (string? pattern, InventoryTextSearchService search) =>
+    search.FindMatchesInSnapshot(pattern, snapshotLines));
+
+// Backwards-compatible fingerprint for a subset of on-prem kiosks.
+app.MapGet("/api/legacy/partner-fingerprint", (string? body, LegacyPartnerAuthService auth) =>
+    auth.VerifyLegacyFingerprint(body));
+
+// Pilot partner endpoints using private CAs.
+app.MapGet("/api/partner/http-peek-tolerant", async (string requestUri, PartnerHttpProbeService probe) =>
+    await probe.GetRawWithCertTolerance(requestUri));
+
+// Reports: footer blob for PDF exports.
+app.MapGet("/api/reports/encrypt-footer", (string? text, ReportExportCryptoService report) =>
+    report.EncryptFooterPayload(text));
+
+// ETL: bridge to legacy .cmd on the Windows jump host.
+app.MapGet("/api/ops/etl-bridge", (string? scriptPath, string? args, AutomationBridgeService bridge) =>
+    bridge.RunScriptOnBridge(scriptPath, args));
+
+// Simulation: non-prod load shaping for the cold-chain batcher.
+app.MapGet("/api/shipments/sim/queue-weight", (ShipmentPriorityService s) => s.SampleQueueWeight());
 
 app.MapGet("/healthz", () => Results.Ok("ok"));
 
