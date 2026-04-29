@@ -1,0 +1,25 @@
+@JuiceShop.DataPipeline_HostAddress = http://localhost:5169
+
+GET {{JuiceShop.DataPipeline_HostAddress}}/healthz
+Accept: application/json
+
+###
+
+GET {{JuiceShop.DataPipeline_HostAddress}}/api/warehouse/orders/lookup?whereFragment=1%3D1
+Accept: application/json
+
+###
+
+GET {{JuiceShop.DataPipeline_HostAddress}}/api/merch/feed-peek?sourceUrl=https%3A%2F%2Fexample.com%2F
+Accept: text/plain
+
+###
+
+POST {{JuiceShop.DataPipeline_HostAddress}}/api/pipeline/ingest/summary
+Content-Type: application/json
+
+{
+  "latestFilePath": "/tmp/partner-drop.csv"
+}
+
+###

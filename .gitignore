@@ -63,5 +63,11 @@ config/*.yml
 !config/oss.yml
 !config/defcon33.yml
 
+# .NET (companion data pipeline)
+dotnet/**/bin/
+dotnet/**/obj/
+*.user
+*.suo
+
 # System Files
 .DS_Store
