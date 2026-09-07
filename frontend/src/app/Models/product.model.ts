@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2025 Bjoern Kimminich & the OWASP Juice Shop contributors.
+ * Copyright (c) 2014-2026 Bjoern Kimminich & the OWASP Juice Shop contributors.
  * SPDX-License-Identifier: MIT
  */
 
@@ -9,5 +9,8 @@ export interface Product {
   description: string
   image: string
   price: number
-  points: number
+  points?: number
+  deluxePrice: number
 }
+
+export type ProductTableEntry = Product & { quantity?: number }
