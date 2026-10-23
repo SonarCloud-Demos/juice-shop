@@ -26,6 +26,8 @@ async function loadLibxml2 () {
   return await libxml2Promise
 }
 
+const parseScript = new vm.Script('parse()')
+
 // Parses XML with entity substitution and external entity loading enabled
 // (intentionally vulnerable to XXE for the related challenges). The parse runs
 // in a vm context with a timeout so entity-expansion bombs surface as a
@@ -33,9 +35,9 @@ async function loadLibxml2 () {
 export async function parseXmlString (data: string, timeoutMs = 2000): Promise<string> {
   const libxml2 = await loadLibxml2()
   const option = libxml2.ParseOption.XML_PARSE_NOENT | libxml2.ParseOption.XML_PARSE_DTDLOAD | libxml2.ParseOption.XML_PARSE_NOBLANKS | libxml2.ParseOption.XML_PARSE_NOCDATA
-  const sandbox = { libxml2, data, option }
+  const sandbox = { parse: () => libxml2.XmlDocument.fromString(data, { option }) }
   vm.createContext(sandbox)
-  const xmlDoc = vm.runInContext('libxml2.XmlDocument.fromString(data, { option })', sandbox, { timeout: timeoutMs })
+  const xmlDoc = parseScript.runInContext(sandbox, { timeout: timeoutMs })
   const xmlString = xmlDoc.toString()
   xmlDoc.dispose()
   return xmlString
